@@ -266,6 +266,12 @@ a.agenda-link{color:var(--blue);text-decoration:underline;font-weight:600;}
 .legend .sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-2px;}
 canvas{max-width:100%;}
 [hidden]{display:none!important;}
+.ap-sort{border:0;background:none;color:inherit;font:inherit;font-weight:700;padding:0;text-align:left;white-space:nowrap;}
+.ap-sort:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
+.ap-entry td{background:#eff6ff;vertical-align:top;}
+.ap-entry input,.ap-entry select,.ap-entry textarea{width:100%;min-width:90px;border:1px solid #93c5fd;border-radius:5px;padding:6px;background:#fff;font:inherit;}
+.ap-entry input[placeholder="dd/mm/yyyy"]{min-width:112px;}
+.ap-entry textarea{min-width:150px;resize:vertical;}
 </style>
 </head>
 <body>
@@ -369,16 +375,27 @@ canvas{max-width:100%;}
       <div class="tablewrap" style="flex:1;">
         <table>
           <thead><tr>
-            <th style="width:60px;">Priority</th>
-            <th style="width:90px;">Ngày</th>
-            <th style="min-width:200px;">Issue (4W-1H)</th>
-            <th style="min-width:200px;">Action</th>
-            <th style="width:100px;">PIC</th>
-            <th style="width:90px;">Due date</th>
-            <th style="width:110px;">Status</th>
-            <th style="min-width:150px;">Remarks</th>
+            <th style="width:60px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="priority">Priority <span aria-hidden="true">↕</span></button></th>
+            <th style="width:90px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="date">Ngày <span aria-hidden="true">↕</span></button></th>
+            <th style="min-width:200px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="issue">Issue (4W-1H) <span aria-hidden="true">↕</span></button></th>
+            <th style="min-width:200px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="action">Action <span aria-hidden="true">↕</span></button></th>
+            <th style="width:100px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="pic">PIC <span aria-hidden="true">↕</span></button></th>
+            <th style="width:90px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="dueDate">Due date <span aria-hidden="true">↕</span></button></th>
+            <th style="width:110px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="status">Status <span aria-hidden="true">↕</span></button></th>
+            <th style="min-width:150px;" aria-sort="none"><button type="button" class="ap-sort" data-ap-sort="remarks">Remarks <span aria-hidden="true">↕</span></button></th>
             <th style="width:80px;"></th>
           </tr></thead>
+          <tbody id="apEntryBody"><tr class="ap-entry">
+            <td><select id="apNew_priority" aria-label="Priority"></select></td>
+            <td><input id="apNew_date" type="date" aria-label="Ngày"></td>
+            <td><textarea id="apNew_issue" rows="2" placeholder="Nhập Issue…" aria-label="Issue (4W-1H)"></textarea></td>
+            <td><textarea id="apNew_action" rows="2" placeholder="Nhập Action…" aria-label="Action"></textarea></td>
+            <td><input id="apNew_pic" list="picList" placeholder="PIC" aria-label="PIC"></td>
+            <td><input id="apNew_dueDate" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric" aria-label="Due date"></td>
+            <td><select id="apNew_status" aria-label="Status"></select></td>
+            <td><textarea id="apNew_remarks" rows="2" placeholder="Remarks" aria-label="Remarks"></textarea></td>
+            <td><button type="button" class="btn primary sm" id="btnApQuickAdd">Thêm</button></td>
+          </tr></tbody>
           <tbody id="apBody"></tbody>
         </table>
       </div>
@@ -975,17 +992,9 @@ canvas{max-width:100%;}
       <div class="field"><label>Ngày</label><input type="date" id="f_date"></div>
       <div class="field full"><label>Issue (4W-1H)</label><textarea id="f_issue"></textarea></div>
       <div class="field full"><label>Action</label><textarea id="f_action"></textarea></div>
-      <div class="field"><label>Requestor</label><input type="text" id="f_requestor" list="picList"></div>
       <div class="field"><label>PIC</label><input type="text" id="f_pic" list="picList"></div>
-      <div class="field"><label>Partner</label><input type="text" id="f_partner" list="picList"></div>
-      <div class="field"><label>Department</label><input type="text" id="f_department"></div>
-      <div class="field"><label>Due date</label><input type="text" id="f_duedate" placeholder="VD: 30/09/2026"></div>
+      <div class="field"><label>Due date</label><input type="text" id="f_duedate" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric"></div>
       <div class="field"><label>Status</label><select id="f_status"></select></div>
-      <div class="field"><label>Progress %</label><input type="number" id="f_progress" min="0" max="100" step="5"></div>
-      <div class="field"><label>Completed date</label><input type="date" id="f_completeddate"></div>
-      <div class="field full"><label>Root Cause</label><textarea id="f_rootcause"></textarea></div>
-      <div class="field"><label>Expected Result</label><textarea id="f_expected"></textarea></div>
-      <div class="field"><label>Actual Result</label><textarea id="f_actual"></textarea></div>
       <div class="field full"><label>Remarks</label><textarea id="f_remarks"></textarea></div>
     </div>
     <p class="hint" id="apMeetingLink" hidden></p>
@@ -1276,7 +1285,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
    auth is a plain email+password login handled entirely by the Worker (see
    SECTION: AUTH below).
    ========================================================================= */
-const WORKER_API_URL = "https://dor-wor-api.dangthanhbinh53.workers.dev";
+const WORKER_API_URL = "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev";
 const workerConfigured = !WORKER_API_URL.startsWith("https://YOUR-WORKER");
 const LS_KEY_TOKEN = "dor_app_auth_token";
 
@@ -15713,6 +15722,95 @@ function renderApSummary(items){
     <div class="stat-card"><div class="num">${s.byStatus["Cancel"]||0}</div><div class="lbl">Đã huỷ</div></div>
   `;
 }
+let AP_SORT = {key:"date", direction:-1};
+function formatApDate(value){
+  if(!value) return "";
+  const date = parseFlexDate(value);
+  if(!date || Number.isNaN(date.getTime())) return String(value);
+  return String(date.getDate()).padStart(2,"0")+"/"+String(date.getMonth()+1).padStart(2,"0")+"/"+date.getFullYear();
+}
+function apDateISO(value){
+  const d = parseFlexDate(value);
+  if(!d || Number.isNaN(d.getTime())) return "";
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function validateApDueDate(value, input){
+  let valid = !value;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if(m){
+    const d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+    valid=d.getFullYear()===Number(m[3]) && d.getMonth()===Number(m[2])-1 && d.getDate()===Number(m[1]);
+  }
+  input.setCustomValidity(valid ? "" : "Nhập ngày hợp lệ theo dd/mm/yyyy, ví dụ 30/09/2026.");
+  if(!valid){input.reportValidity(); input.focus();}
+  return valid;
+}
+function compareApItems(a,b){
+  const key=AP_SORT.key, dir=AP_SORT.direction;
+  let x=a[key], y=b[key];
+  if(key==="date"||key==="dueDate"){
+    x=parseFlexDate(x)?.getTime(); y=parseFlexDate(y)?.getTime();
+    if(!Number.isFinite(x))x=null;
+    if(!Number.isFinite(y))y=null;
+  }else if(key==="priority"){
+    x=x ? (PRIORITY_RANK[x]||0) : null; y=y ? (PRIORITY_RANK[y]||0) : null;
+  }else if(key==="status"){
+    x=STATUS_LABEL_VI[x]||x; y=STATUS_LABEL_VI[y]||y;
+  }
+  const empty=v=>v===undefined||v===null||v==="";
+  if(empty(x)||empty(y)) return empty(x)===empty(y)?0:empty(x)?1:-1;
+  return dir*(typeof x==="number" && typeof y==="number" ? x-y : String(x).localeCompare(String(y),"vi",{numeric:true,sensitivity:"base"}));
+}
+function updateApSortHeaders(){
+  document.querySelectorAll("[data-ap-sort]").forEach(button=>{
+    const active=button.dataset.apSort===AP_SORT.key;
+    button.parentElement.setAttribute("aria-sort",active?(AP_SORT.direction===1?"ascending":"descending"):"none");
+    button.querySelector("span").textContent=active?(AP_SORT.direction===1?"↑":"↓"):"↕";
+  });
+}
+function initApTableEntry(){
+  document.getElementById("apNew_priority").innerHTML=document.getElementById("f_priority").innerHTML;
+  fillStatusSelect(document.getElementById("apNew_status"),false);
+  document.getElementById("apNew_date").value=todayISO();
+  document.getElementById("btnApQuickAdd").addEventListener("click",addApFromTable);
+  document.querySelectorAll("[data-ap-sort]").forEach(button=>button.addEventListener("click",()=>{
+    const key=button.dataset.apSort;
+    AP_SORT={key,direction:AP_SORT.key===key ? -AP_SORT.direction : 1};
+    renderActionPlan();
+  }));
+  for(const id of ["f_duedate","apNew_dueDate"]){
+    document.getElementById(id).addEventListener("input",event=>event.target.setCustomValidity(""));
+  }
+  document.getElementById("apEntryBody").addEventListener("keydown",event=>{
+    if(event.key==="Enter" && !event.isComposing && (event.target.tagName!=="TEXTAREA" || event.ctrlKey || event.metaKey)){
+      if(event.target.tagName==="BUTTON")return;
+      event.preventDefault(); addApFromTable();
+    }
+  });
+}
+function addApFromTable(){
+  if(!ensureLoggedIn())return;
+  const data={};
+  for(const key of ["priority","date","issue","action","pic","dueDate","status","remarks"]){
+    data[key]=document.getElementById("apNew_"+key).value.trim();
+  }
+  if(!data.issue){toast("Vui lòng nhập Issue","err");document.getElementById("apNew_issue").focus();return;}
+  if(!validateApDueDate(data.dueDate,document.getElementById("apNew_dueDate")))return;
+  data.priority=data.priority||null;
+  if(data.status==="Done")data.completedDate=todayISO();
+  const stamp=nowTs();
+  STATE.actionItems.push({...data,id:uid("ap"),originalDueDate:data.dueDate,dueDateHistory:[],dueDateChangeCount:0,
+    createdBy:CURRENT_USER.name,createdAt:stamp,updatedBy:CURRENT_USER.name,updatedAt:stamp});
+  onDataChanged();
+  for(const key of ["priority","issue","action","pic","dueDate","remarks"])document.getElementById("apNew_"+key).value="";
+  document.getElementById("apNew_date").value=todayISO();
+  document.getElementById("apNew_status").value="Open";
+  renderApFilters();renderActionPlan();
+  const visible=getFilteredApItems().some(it=>it.id===STATE.actionItems[STATE.actionItems.length-1].id);
+  toast(visible?"Đã thêm Action":"Đã thêm Action; dòng mới đang bị ẩn bởi bộ lọc","ok");
+  document.getElementById("apNew_issue").focus();
+}
+
 let AP_SHOW_DONE = false;
 function getFilteredApItems(){
   const q = document.getElementById("apSearch").value.trim().toLowerCase();
@@ -15727,7 +15825,7 @@ function getFilteredApItems(){
   }
   if(stF) items = items.filter(it=>it.status===stF);
   if(picF) items = items.filter(it=>it.pic===picF);
-  items.sort((a,b)=> (parseFlexDate(b.date)||0) - (parseFlexDate(a.date)||0));
+  items.sort(compareApItems);
   return items;
 }
 function updateApToggleBtn(){
@@ -15736,14 +15834,19 @@ function updateApToggleBtn(){
   btn.classList.toggle("primary", AP_SHOW_DONE);
 }
 function renderApFilters(){
+  const previousStatus = document.getElementById("apFilterStatus").value;
+  const previousPic = document.getElementById("apFilterPic").value;
   fillStatusSelect(document.getElementById("apFilterStatus"), true);
   const picSel = document.getElementById("apFilterPic");
   const pics = Array.from(new Set(STATE.actionItems.map(it=>it.pic).filter(Boolean))).sort();
   picSel.innerHTML = '<option value="">Tất cả PIC</option>' + pics.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("");
+  document.getElementById("apFilterStatus").value = previousStatus;
+  picSel.value = pics.includes(previousPic) ? previousPic : "";
   const dl = document.getElementById("picList");
   dl.innerHTML = pics.map(p=>`<option value="${escapeHtml(p)}">`).join("");
 }
 function renderActionPlan(){
+  updateApSortHeaders();
   renderApSummary(STATE.actionItems);
   renderActionDashboard(STATE.actionItems, "apDashboard");
   updateApToggleBtn();
@@ -15763,7 +15866,7 @@ function renderActionPlan(){
       <td class="pre">${nl2br(it.issue)}</td>
       <td class="pre">${nl2br(it.action)}</td>
       <td>${escapeHtml(it.pic)}</td>
-      <td>${escapeHtml(it.dueDate)} ${overdueFlag?'<br><span class="badge st-Late">Quá hạn</span>':""}${revisedBadgeHtml(it)}</td>
+      <td>${escapeHtml(formatApDate(it.dueDate))} ${overdueFlag?'<br><span class="badge st-Late">Quá hạn</span>':""}${revisedBadgeHtml(it)}</td>
       <td><select class="status-select badge ${statusClass(it.status)}" data-id="${it.id}">${STATUS_LIST.map(s=>`<option value="${s}" ${s===it.status?"selected":""}>${STATUS_LABEL_VI[s]}</option>`).join("")}</select></td>
       <td class="pre">${nl2br(it.remarks)}</td>
       <td><button class="btn sm" data-edit="${it.id}">Sửa</button></td>
@@ -15801,26 +15904,18 @@ function openApModal(id, prefill){
     const it = STATE.actionItems.find(x=>x.id===id);
     document.getElementById("apModalTitle").textContent = "Sửa Action";
     document.getElementById("f_priority").value = it.priority || "";
-    document.getElementById("f_date").value = /^\d{4}-\d{2}-\d{2}$/.test(it.date) ? it.date : "";
+    document.getElementById("f_date").value = apDateISO(it.date);
     document.getElementById("f_issue").value = it.issue || "";
     document.getElementById("f_action").value = it.action || "";
-    document.getElementById("f_requestor").value = it.requestor || "";
     document.getElementById("f_pic").value = it.pic || "";
-    document.getElementById("f_partner").value = it.partner || "";
-    document.getElementById("f_department").value = it.department || "";
-    document.getElementById("f_duedate").value = it.dueDate || "";
+    document.getElementById("f_duedate").value = formatApDate(it.dueDate);
     document.getElementById("f_status").value = it.status || "Open";
-    document.getElementById("f_progress").value = it.progressPct!=null ? it.progressPct : "";
-    document.getElementById("f_completeddate").value = /^\d{4}-\d{2}-\d{2}$/.test(it.completedDate||"") ? it.completedDate : "";
-    document.getElementById("f_rootcause").value = it.rootCause || "";
-    document.getElementById("f_expected").value = it.expectedResult || "";
-    document.getElementById("f_actual").value = it.actualResult || "";
     document.getElementById("f_remarks").value = it.remarks || "";
     AP_MODAL_MEETING_ID = it.meetingId || null;
     if(it.meetingId){ linkEl.hidden=false; linkEl.textContent = "🔗 Gắn với Meeting: " + it.meetingId; } else { linkEl.hidden = true; }
   } else {
     document.getElementById("apModalTitle").textContent = "Thêm Action mới";
-    ["f_priority","f_issue","f_action","f_requestor","f_pic","f_partner","f_department","f_duedate","f_progress","f_completeddate","f_rootcause","f_expected","f_actual","f_remarks"].forEach(id2=>document.getElementById(id2).value="");
+    ["f_priority","f_issue","f_action","f_pic","f_duedate","f_remarks"].forEach(id2=>document.getElementById(id2).value="");
     document.getElementById("f_date").value = todayISO();
     document.getElementById("f_status").value = "Open";
     linkEl.hidden = true;
@@ -15839,21 +15934,15 @@ function saveApModal(){
     date: document.getElementById("f_date").value || "",
     issue: document.getElementById("f_issue").value.trim(),
     action: document.getElementById("f_action").value.trim(),
-    requestor: document.getElementById("f_requestor").value.trim(),
     pic: document.getElementById("f_pic").value.trim(),
-    partner: document.getElementById("f_partner").value.trim(),
-    department: document.getElementById("f_department").value.trim(),
     dueDate: document.getElementById("f_duedate").value.trim(),
     status: document.getElementById("f_status").value,
-    progressPct: document.getElementById("f_progress").value ? Number(document.getElementById("f_progress").value) : null,
-    completedDate: document.getElementById("f_completeddate").value || "",
-    rootCause: document.getElementById("f_rootcause").value.trim(),
-    expectedResult: document.getElementById("f_expected").value.trim(),
-    actualResult: document.getElementById("f_actual").value.trim(),
     remarks: document.getElementById("f_remarks").value.trim(),
   };
   if(!data.issue){ toast("Vui lòng nhập Issue","err"); return; }
-  if(data.status==="Done" && !data.completedDate) data.completedDate = todayISO();
+  if(!validateApDueDate(data.dueDate, document.getElementById("f_duedate"))) return;
+  const existing = STATE.actionItems.find(x=>x.id===AP_MODAL_EDIT_ID);
+  if(data.status==="Done" && !existing?.completedDate) data.completedDate = todayISO();
   if(AP_MODAL_EDIT_ID){
     const it = STATE.actionItems.find(x=>x.id===AP_MODAL_EDIT_ID);
     const newDueDate = data.dueDate;
@@ -18020,6 +18109,7 @@ function doPurgeOldData(){
    SECTION: INIT / EVENT WIRING
    ========================================================================= */
 function wireEvents(){
+  initApTableEntry();
   document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click", ()=>switchTab(b.dataset.tab)));
   document.getElementById("btnLogin").addEventListener("click", doLogin);
   document.getElementById("btnLogout").addEventListener("click", doLogout);
